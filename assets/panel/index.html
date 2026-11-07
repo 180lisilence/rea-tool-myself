@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+<meta name="theme-color" content="#171a22" />
+<title>REA Panel</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- ============ 顶栏 ============ -->
+<header id="topbar">
+  <div class="tb-left">
+    <span class="logo">REA</span>
+    <span id="connDot" class="dot off" title="连接状态"></span>
+  </div>
+  <div class="tb-right">
+    <button id="btnCfg" class="ico-btn" title="服务器设置">⚙</button>
+    <button id="btnBack" class="ico-btn hidden" title="返回">←</button>
+  </div>
+</header>
+
+<!-- ============ 屏幕 1：服务器配置 ============ -->
+<section id="scrConfig" class="screen active">
+  <div class="cfg-wrap">
+    <h1>连接电脑</h1>
+    <p class="cfg-hint">在电脑上运行 <code>rea_server.py</code>，手机与电脑连同一 WiFi，然后填下面的地址。</p>
+
+    <label class="cfg-label">服务器地址</label>
+    <input id="inpUrl" type="url" class="inp" placeholder="http://192.168.137.1:8788"
+           autocomplete="off" autocorrect="off" spellcheck="false" />
+
+    <label class="cfg-label">访问令牌（可选）</label>
+    <input id="inpToken" type="text" class="inp" placeholder="留空即可" autocomplete="off" />
+
+    <button id="btnConnect" class="btn primary block">测试连接</button>
+    <div id="cfgStatus" class="cfg-status"></div>
+
+    <div class="cfg-tip">
+      <div class="tip-title">提示</div>
+      <ul>
+        <li>电脑上执行：<code>python app/rea_server.py</code></li>
+        <li>启动后会打印「手机填这个」的地址，照抄过来</li>
+        <li>首次连接需允许 Windows 防火墙放行</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 屏幕 2：命令列表 ============ -->
+<section id="scrList" class="screen">
+  <div class="search-wrap">
+    <input id="cmdSearch" type="search" class="inp" placeholder="搜索命令…" autocomplete="off" />
+  </div>
+  <div class="list-head">
+    <span id="listCount">—</span>
+    <button id="btnReload" class="link-btn">重新加载</button>
+  </div>
+  <div id="cmdList" class="cmd-list"></div>
+</section>
+
+<!-- ============ 屏幕 3：命令详情 / 参数 ============ -->
+<section id="scrDetail" class="screen">
+  <div class="detail-head">
+    <div id="detName" class="det-name">—</div>
+    <div id="detSummary" class="det-summary"></div>
+    <div id="detCmdline" class="det-cmdline"></div>
+  </div>
+  <div id="argForm" class="arg-form"></div>
+  <div class="detail-actions">
+    <button id="btnRun" class="btn primary block">运行 ▶</button>
+    <button id="btnStop" class="btn danger hidden">停止</button>
+  </div>
+</section>
+
+<!-- ============ 屏幕 4：结果 ============ -->
+<section id="scrResult" class="screen">
+  <div class="result-head">
+    <span id="resBadge" class="badge">—</span>
+    <div class="view-switch">
+      <button data-v="json" class="vs-btn active">JSON</button>
+      <button data-v="raw" class="vs-btn">文本</button>
+    </div>
+  </div>
+  <div id="resBody" class="res-body"></div>
+  <div class="result-actions">
+    <button id="btnCopy" class="btn block">复制结果</button>
+    <button id="btnAgain" class="btn block">再跑一次</button>
+  </div>
+</section>
+
+<!-- ============ 底部导航 ============ -->
+<nav id="tabbar">
+  <button data-tab="scrList" class="tab active"><span>☰</span>命令</button>
+  <button data-tab="scrDetail" class="tab"><span>⚙</span>参数</button>
+  <button data-tab="scrResult" class="tab"><span>▤</span>结果</button>
+  <button data-tab="scrConfig" class="tab"><span>⇄</span>连接</button>
+</nav>
+
+<div id="toast" class="toast hidden"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
