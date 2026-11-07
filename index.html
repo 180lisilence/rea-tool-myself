@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="theme-color" content="#0d0f14" />
+<meta name="description" content="REA Tool 双端逆向工程控制台：Windows 原生面板 + Android 手机端，把 REA CLI 的 155 个命令装进两个端。" />
+<title>REA Tool · 双端逆向工程控制台</title>
+<style>
+  :root{
+    --bg:#0d0f14; --bg2:#12151d; --card:#171a22; --card2:#1c202b;
+    --line:#2a3040; --line2:#39415a;
+    --tx:#e8ecf5; --tx2:#a7b0c4; --tx3:#6f7891;
+    --cy:#4bd6e8; --pu:#8b7cf6; --gr:#4ade9b; --or:#f5a85c; --rd:#f2717f;
+    --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei","Hiragino Sans GB",sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{background:var(--bg);color:var(--tx);font-family:var(--sans);line-height:1.7;-webkit-font-smoothing:antialiased}
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 24px}
+  code,.mono{font-family:var(--mono)}
+
+  /* ---------- top nav ---------- */
+  .nav{position:sticky;top:0;z-index:50;background:rgba(13,15,20,.86);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+  .nav .wrap{display:flex;align-items:center;justify-content:space-between;height:62px}
+  .brand{display:flex;align-items:center;gap:11px;font-weight:700;letter-spacing:.02em}
+  .brand .mark{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,var(--cy),var(--pu));display:grid;place-items:center;color:#0d0f14;font:800 13px/1 var(--mono);letter-spacing:-.5px}
+  .brand small{color:var(--tx3);font-weight:500;font-size:12px;margin-left:2px}
+  .navlinks{display:flex;gap:24px;font-size:13.5px;color:var(--tx2)}
+  .navlinks a:hover{color:var(--cy)}
+  .navlinks .gh{border:1px solid var(--line2);padding:6px 13px;border-radius:8px;color:var(--tx)}
+  .navlinks .gh:hover{border-color:var(--cy);color:var(--cy)}
+  @media(max-width:760px){.navlinks a:not(.gh){display:none}}
+
+  /* ---------- hero ---------- */
+  .hero{position:relative;overflow:hidden;padding:88px 0 72px;border-bottom:1px solid var(--line)}
+  .hero::before{content:"";position:absolute;inset:0;background:
+    radial-gradient(720px 380px at 18% -10%,rgba(75,214,232,.13),transparent 70%),
+    radial-gradient(680px 420px at 88% 12%,rgba(139,124,246,.14),transparent 70%);pointer-events:none}
+  .hero::after{content:"";position:absolute;inset:0;opacity:.35;pointer-events:none;
+    background-image:linear-gradient(rgba(255,255,255,.028) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.028) 1px,transparent 1px);
+    background-size:44px 44px;mask-image:linear-gradient(to bottom,#000,transparent 85%)}
+  .hero .wrap{position:relative;z-index:2}
+  .badge{display:inline-flex;align-items:center;gap:8px;font:600 12px/1 var(--mono);color:var(--cy);
+    border:1px solid rgba(75,214,232,.32);background:rgba(75,214,232,.07);padding:8px 13px;border-radius:999px;letter-spacing:.04em}
+  .badge i{width:7px;height:7px;border-radius:50%;background:var(--gr);box-shadow:0 0 9px var(--gr)}
+  h1{font-size:clamp(34px,5.4vw,58px);line-height:1.16;letter-spacing:-.025em;margin:24px 0 18px;font-weight:800}
+  h1 .grad{background:linear-gradient(100deg,var(--cy),#8fd7ff 42%,var(--pu));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .lead{font-size:clamp(15px,1.7vw,18px);color:var(--tx2);max-width:760px}
+  .lead b{color:var(--tx);font-weight:600}
+  .cta{display:flex;flex-wrap:wrap;gap:13px;margin-top:36px}
+  .btn{display:inline-flex;align-items:center;gap:11px;padding:14px 22px;border-radius:11px;font-size:14.5px;font-weight:650;
+    border:1px solid transparent;transition:transform .16s ease,box-shadow .16s ease,border-color .16s ease,background .16s ease;cursor:pointer}
+  .btn:hover{transform:translateY(-2px)}
+  .btn .ico{font-size:19px;line-height:1}
+  .btn small{display:block;font-weight:400;font-size:11.5px;opacity:.72;margin-top:2px;letter-spacing:.02em}
+  .btn-win{background:linear-gradient(135deg,var(--cy),#38b9d6);color:#08131a;box-shadow:0 8px 28px rgba(75,214,232,.22)}
+  .btn-win:hover{box-shadow:0 12px 34px rgba(75,214,232,.34)}
+  .btn-and{background:linear-gradient(135deg,var(--pu),#6f62e0);color:#fff;box-shadow:0 8px 28px rgba(139,124,246,.22)}
+  .btn-and:hover{box-shadow:0 12px 34px rgba(139,124,246,.34)}
+  .btn-ghost{background:rgba(255,255,255,.035);border-color:var(--line2);color:var(--tx)}
+  .btn-ghost:hover{border-color:var(--tx2);background:rgba(255,255,255,.07)}
+  .metaline{display:flex;flex-wrap:wrap;gap:9px;margin-top:34px}
+  .metaline span{font:500 11.5px/1 var(--mono);color:var(--tx3);border:1px solid var(--line);background:var(--bg2);padding:8px 11px;border-radius:7px}
+
+  /* ---------- sections ---------- */
+  section{padding:76px 0;border-bottom:1px solid var(--line)}
+  .eyebrow{font:600 12px/1 var(--mono);color:var(--cy);letter-spacing:.16em;text-transform:uppercase;margin-bottom:14px}
+  h2{font-size:clamp(25px,3.2vw,34px);letter-spacing:-.02em;line-height:1.25;font-weight:750}
+  .sub{color:var(--tx2);margin-top:12px;max-width:760px;font-size:15px}
+  .grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:18px;margin-top:38px}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:38px}
+  .grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:38px}
+  @media(max-width:900px){.grid3,.grid4{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:640px){.grid2,.grid3,.grid4{grid-template-columns:1fr}}
+  .card{background:linear-gradient(160deg,var(--card),var(--bg2));border:1px solid var(--line);border-radius:15px;padding:26px;position:relative;overflow:hidden}
+  .card:hover{border-color:var(--line2)}
+  .card .tag{font:600 11px/1 var(--mono);letter-spacing:.08em;padding:6px 10px;border-radius:6px;display:inline-block}
+  .card h3{font-size:18px;margin:18px 0 9px;font-weight:700;letter-spacing:-.01em}
+  .card p{color:var(--tx2);font-size:14px}
+  .card ul{list-style:none;margin-top:16px}
+  .card li{font-size:13.3px;color:var(--tx2);padding:7px 0 7px 20px;position:relative;border-top:1px dashed var(--line)}
+  .card li::before{content:"▸";position:absolute;left:2px;color:var(--cy)}
+  .card li b{color:var(--tx);font-weight:600}
+  .kicker{font:600 11px/1 var(--mono);color:var(--tx3);letter-spacing:.09em;margin-top:20px}
+  .file{font:500 12px/1.6 var(--mono);color:var(--cy);background:rgba(75,214,232,.07);border:1px solid rgba(75,214,232,.18);padding:2px 6px;border-radius:5px}
+
+  /* ---------- architecture figure ---------- */
+  .figwrap{margin-top:38px;background:var(--bg2);border:1px solid var(--line);border-radius:15px;padding:22px;overflow-x:auto}
+  .figwrap svg{display:block;width:100%;min-width:760px;height:auto}
+  .fignote{display:flex;flex-wrap:wrap;gap:18px;margin-top:18px;font-size:12.5px;color:var(--tx3)}
+  .fignote i{width:10px;height:10px;border-radius:3px;display:inline-block;margin-right:7px;vertical-align:-1px}
+
+  /* ---------- pipeline ---------- */
+  .pipe{margin-top:22px;background:var(--bg2);border:1px solid var(--line);border-radius:13px;padding:20px 22px}
+  .pipe .pt{font:600 12px/1 var(--mono);color:var(--tx3);letter-spacing:.1em;margin-bottom:15px}
+  .flow{display:flex;flex-wrap:wrap;align-items:center;gap:9px}
+  .step{font:600 12.5px/1 var(--mono);padding:9px 12px;border-radius:8px;background:var(--card);border:1px solid var(--line2);color:var(--tx)}
+  .step.hi{border-color:rgba(75,214,232,.45);color:var(--cy);background:rgba(75,214,232,.07)}
+  .step.pu{border-color:rgba(139,124,246,.45);color:#b9aeff;background:rgba(139,124,246,.08)}
+  .arrow{color:var(--tx3);font:14px/1 var(--mono)}
+  .cmdbox{margin-top:16px;background:#090b10;border:1px solid var(--line);border-radius:9px;padding:14px 16px;
+    font:12.5px/1.85 var(--mono);color:#c9d3e8;overflow-x:auto;white-space:pre}
+  .cmdbox .c{color:var(--gr)} .cmdbox .k{color:var(--pu)} .cmdbox .s{color:var(--or)} .cmdbox .d{color:var(--tx3)}
+
+  /* ---------- branch table ---------- */
+  table{width:100%;border-collapse:collapse;margin-top:34px;font-size:14px}
+  th{text-align:left;font:600 11.5px/1 var(--mono);color:var(--tx3);letter-spacing:.1em;padding:0 16px 14px;text-transform:uppercase}
+  td{padding:17px 16px;border-top:1px solid var(--line);color:var(--tx2);vertical-align:top}
+  td:first-child{font-family:var(--mono);color:var(--cy);font-weight:600;white-space:nowrap}
+  td a{color:var(--tx);border-bottom:1px dashed var(--line2)}
+  td a:hover{color:var(--cy);border-color:var(--cy)}
+  .pill{font:600 10.5px/1 var(--mono);padding:5px 9px;border-radius:5px;display:inline-block}
+  .pill.m{background:rgba(75,214,232,.12);color:var(--cy)} .pill.p{background:rgba(139,124,246,.14);color:#b9aeff}
+
+  /* ---------- steps ---------- */
+  .steps{margin-top:36px;counter-reset:s}
+  .steprow{display:flex;gap:20px;padding:20px 0;border-top:1px solid var(--line)}
+  .steprow:last-child{border-bottom:1px solid var(--line)}
+  .steprow .n{flex:0 0 38px;height:38px;border-radius:10px;background:rgba(75,214,232,.09);border:1px solid rgba(75,214,232,.28);
+    color:var(--cy);font:700 14px/38px var(--mono);text-align:center}
+  .steprow h4{font-size:15.5px;font-weight:650;margin-bottom:5px}
+  .steprow p{font-size:13.5px;color:var(--tx2)}
+  .steprow code{color:var(--cy);background:var(--bg2);padding:2px 7px;border-radius:5px;font-size:12.5px}
+
+  /* ---------- footer ---------- */
+  footer{padding:44px 0 60px;color:var(--tx3);font-size:13px}
+  footer .wrap{display:flex;flex-wrap:wrap;gap:14px;justify-content:space-between;align-items:center}
+  footer a{color:var(--tx2)} footer a:hover{color:var(--cy)}
+  .reveal{opacity:0;transform:translateY(16px);transition:opacity .55s ease,transform .55s ease}
+  .reveal.on{opacity:1;transform:none}
+</style>
+</head>
+<body>
+
+<!-- ============ NAV ============ -->
+<nav class="nav">
+  <div class="wrap">
+    <div class="brand"><span class="mark">REA</span> REA Tool <small>/ dual-end console</small></div>
+    <div class="navlinks">
+      <a href="#overview">双端</a>
+      <a href="#how">原理</a>
+      <a href="#build">构建</a>
+      <a href="#branches">分支</a>
+      <a href="#start">开始</a>
+      <a class="gh" href="https://github.com/180lisilence/rea-tool-myself" target="_blank" rel="noopener">GitHub ↗</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ============ HERO ============ -->
+<header class="hero">
+  <div class="wrap">
+    <span class="badge"><i></i> v1.0.0 · 双端已构建 · 155 个 REA 命令</span>
+    <h1>把 <span class="grad">REA CLI</span> 装进<br />两个端</h1>
+    <p class="lead">
+      <b>REA Tool</b> 是逆向工程分析套件 REA CLI 的图形化双端实现：
+      <b>Windows 原生面板</b>在本机直接驱动 rea 命令；<b>Android 手机端</b>作为轻量前端，
+      通过局域网 REST / SSE 接口把命令发回电脑执行。两端共用同一套命令索引与 JSON Schema 参数表单，
+      界面与结果格式完全对齐。
+    </p>
+
+    <div class="cta">
+      <a class="btn btn-win" href="https://github.com/180lisilence/rea-tool-myself/releases/download/v1.0.0/REA-Panel.exe">
+        <span class="ico">⬇</span>
+        <span>下载 Windows 面板端<small>REA-Panel.exe · 约 37 MB · 单文件免安装</small></span>
+      </a>
+      <a class="btn btn-and" href="https://github.com/180lisilence/rea-tool-myself/releases/download/v1.0.0/REA-Panel-Mobile.apk">
+        <span class="ico">⬇</span>
+        <span>下载 Android 手机端<small>REA-Panel-Mobile.apk · 约 50 KB · Android 7.0+</small></span>
+      </a>
+      <a class="btn btn-ghost" href="https://github.com/180lisilence/rea-tool-myself" target="_blank" rel="noopener">
+        <span class="ico">⌘</span>
+        <span>查看源码<small>main / panel / mobile 三分支</small></span>
+      </a>
+    </div>
+
+    <div class="metaline">
+      <span>PyQt6 6.11</span><span>PyInstaller 6.22</span><span>Android WebView</span>
+      <span>JSON Schema → 自动表单</span><span>QThread 异步</span><span>REST + SSE</span>
+      <span>ThreadingHTTPServer</span><span>aapt2 / d8 / apksigner</span><span>零第三方运行时</span>
+    </div>
+  </div>
+</header>
+
+<!-- ============ OVERVIEW ============ -->
+<section id="overview">
+  <div class="wrap">
+    <div class="eyebrow reveal">01 / Overview</div>
+    <h2 class="reveal">一个后端，两种交互形态</h2>
+    <p class="sub reveal">REA 本身是 Node.js CLI，不能直接跑在 Android 上。项目因此拆成两个端：PC 端把 CLI 包成原生窗口，手机端把 CLI 包成 HTTP 服务再配一个 WebView 前端。命令能力完全一致，只是承载方式不同。</p>
+
+    <div class="grid2">
+      <div class="card reveal">
+        <span class="tag" style="background:rgba(75,214,232,.12);color:var(--cy)">DESKTOP · panel 分支</span>
+        <h3>REA-Panel.exe — Windows 原生控制台</h3>
+        <p>PyQt6 三栏桌面窗口，直接 fork 本机 rea 进程执行分析命令，PyInstaller 打成单文件 exe，双击即用、无需 Python 环境。</p>
+        <ul>
+          <li><b>左栏</b> 153 个命令按 7 类分组，支持 <code class="file">Ctrl+F</code> 搜索</li>
+          <li><b>中栏</b> 由 <code class="file">--schema</code> 自动生成参数表单：enum→下拉、bool→复选、array→JSON、路径→浏览按钮</li>
+          <li><b>右栏</b> 结果三视图：JSON 折叠树 / 原始文本 / 图片预览</li>
+          <li><b>底部</b> 运行日志、退出码、耗时；<code class="file">Ctrl+Enter</code> 运行</li>
+        </ul>
+        <div class="kicker">入口 <span class="file">main.py</span> → <span class="file">app/main_window.py</span> → <span class="file">app/rea_backend.py</span></div>
+      </div>
+
+      <div class="card reveal">
+        <span class="tag" style="background:rgba(139,124,246,.14);color:#b9aeff">MOBILE · mobile 分支</span>
+        <h3>REA-Panel-Mobile.apk — 手机端</h3>
+        <p>极简 APK（约 50 KB）：一个原生 WebView 壳加载随包内置的 HTML 界面，界面用 <code class="file">fetch</code> 调电脑上的 HTTP 服务，手机与电脑连同一 WiFi 即可。</p>
+        <ul>
+          <li><b>本地前端</b> <code class="file">assets/panel/</code> 四屏：连接 / 命令 / 参数 / 结果</li>
+          <li><b>连接配置</b> 填服务器地址与可选令牌，状态灯实时反映连通性</li>
+          <li><b>流式输出</b> 走 SSE <code class="file">/api/stream</code>，长任务逐段回显</li>
+          <li><b>结果视图</b> JSON / 文本切换，一键复制结果</li>
+        </ul>
+        <div class="kicker">入口 <span class="file">MainActivity.java</span> · 服务 <span class="file">app/rea_server.py</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ HOW IT WORKS ============ -->
+<section id="how">
+  <div class="wrap">
+    <div class="eyebrow reveal">02 / Architecture</div>
+    <h2 class="reveal">工作原理</h2>
+    <p class="sub reveal">两条链路共用同一层 <code class="file">rea_backend.py</code>：它负责定位 rea 执行环境、解析命令索引、拉取 JSON Schema、流式执行命令。区别只在于「谁调用它」。</p>
+
+    <div class="figwrap reveal">
+      <svg viewBox="0 0 1000 400" xmlns="http://www.w3.org/2000/svg" font-family="ui-monospace,Menlo,Consolas,monospace">
+        <defs>
+          <marker id="ar" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto">
+            <path d="M0 0 L9 4.5 L0 9 z" fill="#6f7891"/>
+          </marker>
+          <marker id="arc" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto">
+            <path d="M0 0 L9 4.5 L0 9 z" fill="#4bd6e8"/>
+          </marker>
+          <linearGradient id="gb" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#4bd6e8" stop-opacity=".16"/><stop offset="1" stop-color="#8b7cf6" stop-opacity=".10"/>
+          </linearGradient>
+        </defs>
+
+        <!-- lane labels -->
+        <text x="24" y="30" fill="#6f7891" font-size="12" letter-spacing="2">ANDROID 端</text>
+        <text x="372" y="30" fill="#6f7891" font-size="12" letter-spacing="2">局域网 / 本机</text>
+        <text x="690" y="30" fill="#6f7891" font-size="12" letter-spacing="2">WINDOWS 端</text>
+        <line x1="342" y1="44" x2="342" y2="372" stroke="#2a3040" stroke-dasharray="4 6"/>
+        <line x1="662" y1="44" x2="662" y2="372" stroke="#2a3040" stroke-dasharray="4 6"/>
+
+        <!-- phone box -->
+        <rect x="24" y="52" width="296" height="300" rx="14" fill="#171a22" stroke="#39415a"/>
+        <text x="44" y="82" fill="#b9aeff" font-size="13" font-weight="700">REA-Panel-Mobile.apk</text>
+        <rect x="44" y="98" width="256" height="66" rx="9" fill="#1c202b" stroke="#39415a"/>
+        <text x="58" y="123" fill="#e8ecf5" font-size="12.5">MainActivity.java · WebView</text>
+        <text x="58" y="145" fill="#6f7891" font-size="11">setAllowUniversalAccessFromFileURLs</text>
+        <rect x="44" y="178" width="256" height="78" rx="9" fill="#1c202b" stroke="#39415a"/>
+        <text x="58" y="203" fill="#e8ecf5" font-size="12.5">assets/panel/ 本地前端</text>
+        <text x="58" y="224" fill="#6f7891" font-size="11">index.html · app.js · style.css</text>
+        <text x="58" y="243" fill="#4bd6e8" font-size="11">fetch() / EventSource(SSE)</text>
+        <rect x="44" y="270" width="256" height="60" rx="9" fill="#1c202b" stroke="#39415a"/>
+        <text x="58" y="295" fill="#e8ecf5" font-size="12.5">四屏 UI</text>
+        <text x="58" y="315" fill="#6f7891" font-size="11">连接 · 命令 · 参数 · 结果</text>
+
+        <!-- middle: network -->
+        <rect x="368" y="128" width="268" height="150" rx="14" fill="url(#gb)" stroke="#4bd6e8" stroke-opacity=".55"/>
+        <text x="388" y="158" fill="#4bd6e8" font-size="13" font-weight="700">HTTP · 0.0.0.0:8788</text>
+        <text x="388" y="182" fill="#a7b0c4" font-size="11.5">GET  /api/ping  /api/env</text>
+        <text x="388" y="202" fill="#a7b0c4" font-size="11.5">GET  /api/commands  /api/schema</text>
+        <text x="388" y="222" fill="#a7b0c4" font-size="11.5">POST /api/run</text>
+        <text x="388" y="242" fill="#a7b0c4" font-size="11.5">GET  /api/stream  (SSE)</text>
+        <text x="388" y="264" fill="#6f7891" font-size="11">CORS * · 可选 X-REA-TOKEN</text>
+
+        <!-- pc boxes -->
+        <rect x="688" y="52" width="288" height="140" rx="14" fill="#171a22" stroke="#39415a"/>
+        <text x="708" y="82" fill="#4bd6e8" font-size="13" font-weight="700">REA-Panel.exe · PyQt6</text>
+        <text x="708" y="105" fill="#a7b0c4" font-size="11.5">MainWindow 三栏布局 + QThread</text>
+        <text x="708" y="126" fill="#a7b0c4" font-size="11.5">SchemaForm 自动生成参数控件</text>
+        <text x="708" y="147" fill="#a7b0c4" font-size="11.5">ResultView JSON / 文本 / 图片</text>
+        <text x="708" y="172" fill="#6f7891" font-size="11">本机直接调用，不经网络</text>
+
+        <rect x="688" y="210" width="288" height="64" rx="11" fill="#1c202b" stroke="#39415a"/>
+        <text x="708" y="236" fill="#4ade9b" font-size="12.5" font-weight="700">rea_backend.py · 共用调用层</text>
+        <text x="708" y="257" fill="#6f7891" font-size="11">resolve_rea / list_commands / get_schema / run_stream</text>
+
+        <rect x="688" y="292" width="288" height="60" rx="11" fill="#1c202b" stroke="#39415a"/>
+        <text x="708" y="318" fill="#f5a85c" font-size="12.5" font-weight="700">REA CLI (Node · 155 commands)</text>
+        <text x="708" y="339" fill="#6f7891" font-size="11">node + rea.mjs / rea.cmd / PATH rea</text>
+
+        <!-- arrows -->
+        <line x1="320" y1="216" x2="364" y2="216" stroke="#4bd6e8" stroke-width="2" marker-end="url(#arc)"/>
+        <line x1="636" y1="216" x2="684" y2="216" stroke="#6f7891" stroke-width="2" marker-end="url(#ar)"/>
+        <line x1="832" y1="192" x2="832" y2="206" stroke="#4ade9b" stroke-width="2" marker-end="url(#ar)"/>
+        <line x1="832" y1="274" x2="832" y2="288" stroke="#f5a85c" stroke-width="2" marker-end="url(#ar)"/>
+        <line x1="832" y1="122" x2="832" y2="206" stroke="#6f7891" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#ar)"/>
+        <text x="342" y="205" fill="#4bd6e8" font-size="10">fetch</text>
+        <text x="642" y="205" fill="#6f7891" font-size="10">HTTP</text>
+      </svg>
+      <div class="fignote">
+        <span><i style="background:#8b7cf6"></i>Android 端 = 纯前端 + WebView 壳</span>
+        <span><i style="background:#4bd6e8"></i>局域网 REST / SSE 通道（仅手机端需要）</span>
+        <span><i style="background:#4ade9b"></i>共用调用层</span>
+        <span><i style="background:#f5a85c"></i>实际执行者：REA CLI</span>
+      </div>
+    </div>
+
+    <div class="grid4">
+      <div class="card reveal">
+        <span class="tag" style="background:rgba(75,214,232,.12);color:var(--cy)">01</span>
+        <h3>为什么手机端不移植 CLI</h3>
+        <p>REA 依赖 Node 运行时与本机分析引擎，Android 无法直接承载。改为「手机做前端、电脑做执行端」，零成本对齐全部 155 个命令，且 APK 只有 50 KB。</p>
+      </div>
+      <div class="card reveal">
+        <span class="tag" style="background:rgba(139,124,246,.14);color:#b9aeff">02</span>
+        <h3>Schema 驱动界面</h3>
+        <p>每个命令执行 <code class="file">rea &lt;cmd&gt; --schema --format json</code>，面板据 JSON Schema 现场生成控件，命令增减无需改 UI 代码。</p>
+      </div>
+      <div class="card reveal">
+        <span class="tag" style="background:rgba(74,222,155,.12);color:var(--gr)">03</span>
+        <h3>双通道流式执行</h3>
+        <p>rea 把日志写 stderr、结构化结果写 stdout。PC 端用 QThread 双线程泵回传，手机端用 SSE <code class="file">event: chunk / done</code> 逐段推送。</p>
+      </div>
+      <div class="card reveal">
+        <span class="tag" style="background:rgba(245,168,92,.12);color:var(--or)">04</span>
+        <h3>零联网构建</h3>
+        <p>不用 Electron：本机已有 PyQt6 + PyInstaller，新项目零安装。APK 走免 Gradle 手工链路，只用 Android build-tools，无需下载 Gradle 依赖。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ BUILD PIPELINE ============ -->
+<section id="build">
+  <div class="wrap">
+    <div class="eyebrow reveal">03 / Build pipeline</div>
+    <h2 class="reveal">两条构建链路</h2>
+    <p class="sub reveal">两端都做到「一条命令出成品」：<code class="file">build.bat</code> 分别驱动 PyInstaller 与 Android build-tools。构建中间产物不入库，源码、脚本、签名库与成品齐全，可原样重建。</p>
+
+    <div class="pipe reveal">
+      <div class="pt">PC 面板 · rea-panel / build.bat</div>
+      <div class="flow">
+        <span class="step">main.py</span><span class="arrow">→</span>
+        <span class="step">PyInstaller --clean --onefile --windowed</span><span class="arrow">→</span>
+        <span class="step">--icon assets/icon.ico --add-data assets</span><span class="arrow">→</span>
+        <span class="step">--exclude-module QtWebEngine* / numpy / PIL</span><span class="arrow">→</span>
+        <span class="step hi">dist/REA-Panel.exe</span>
+      </div>
+      <div class="cmdbox"><span class="c"># 排除 QtWebEngine 必加，否则体积从 37 MB 涨到 150 MB</span>
+<span class="k">python</span> -m PyInstaller --clean --noconfirm --name REA-Panel --windowed --onefile <span class="s">^</span>
+  --icon assets/icon.ico --add-data <span class="d">"assets;assets"</span> <span class="s">^</span>
+  --exclude-module PyQt6.QtWebEngineCore --exclude-module numpy <span class="s">^</span>
+  main.py</div>
+    </div>
+
+    <div class="pipe reveal" style="margin-top:18px">
+      <div class="pt">Android 手机端 · rea-mobile / build_apk.py（免 Gradle 手工链路）</div>
+      <div class="flow">
+        <span class="step">aapt2 compile</span><span class="arrow">→</span>
+        <span class="step">aapt2 link + R.java</span><span class="arrow">→</span>
+        <span class="step">javac -encoding UTF-8</span><span class="arrow">→</span>
+        <span class="step">d8 → classes.dex</span><span class="arrow">→</span>
+        <span class="step">jar uf 写回 dex</span><span class="arrow">→</span>
+        <span class="step">zipalign -f 4</span><span class="arrow">→</span>
+        <span class="step pu">apksigner sign</span><span class="arrow">→</span>
+        <span class="step pu">dist/REA-Panel-Mobile.apk</span>
+      </div>
+      <div class="cmdbox"><span class="c"># minSdk 24 / targetSdk 34，debug.keystore 随仓库提供，可原样重签</span>
+<span class="k">python</span> build_apk.py
+<span class="c"># 产物校验：apksigner verify --print-certs dist/REA-Panel-Mobile.apk</span>
+<span class="k">adb</span> install -r dist/REA-Panel-Mobile.apk</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ BRANCHES ============ -->
+<section id="branches">
+  <div class="wrap">
+    <div class="eyebrow reveal">04 / Branches</div>
+    <h2 class="reveal">分支结构</h2>
+    <p class="sub reveal">双端各自独立分支，互不混放；<code class="file">main</code> 只放项目介绍页，可直接作为 GitHub Pages 站点发布。</p>
+    <table class="reveal">
+      <thead><tr><th>分支</th><th>内容</th><th>入口 / 成品</th><th>链接</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>main</td>
+          <td><span class="pill m">介绍页</span> 本页 index.html、README、.gitignore</td>
+          <td><code class="file">index.html</code></td>
+          <td><a href="https://github.com/180lisilence/rea-tool-myself/tree/main" target="_blank" rel="noopener">浏览 ↗</a></td>
+        </tr>
+        <tr>
+          <td>panel</td>
+          <td><span class="pill p">PC 端</span> PyQt6 源码、assets、REA-Panel.spec、build.bat、README</td>
+          <td><code class="file">main.py</code> · <code class="file">dist/REA-Panel.exe</code></td>
+          <td><a href="https://github.com/180lisilence/rea-tool-myself/tree/panel" target="_blank" rel="noopener">浏览 ↗</a></td>
+        </tr>
+        <tr>
+          <td>mobile</td>
+          <td><span class="pill p">手机端</span> Java / WebView 壳、本地 H5 前端、res、AndroidManifest、build_apk.py</td>
+          <td><code class="file">MainActivity.java</code> · <code class="file">dist/REA-Panel-Mobile.apk</code></td>
+          <td><a href="https://github.com/180lisilence/rea-tool-myself/tree/mobile" target="_blank" rel="noopener">浏览 ↗</a></td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="sub reveal" style="margin-top:22px;font-size:13.5px">
+      备用直链（Release 之外的分支内成品）：
+      <a href="https://raw.githubusercontent.com/180lisilence/rea-tool-myself/panel/dist/REA-Panel.exe" style="color:var(--cy);border-bottom:1px dashed var(--line2)">REA-Panel.exe ↗</a> ·
+      <a href="https://raw.githubusercontent.com/180lisilence/rea-tool-myself/mobile/dist/REA-Panel-Mobile.apk" style="color:var(--cy);border-bottom:1px dashed var(--line2)">REA-Panel-Mobile.apk ↗</a>
+    </p>
+  </div>
+</section>
+
+<!-- ============ QUICK START ============ -->
+<section id="start">
+  <div class="wrap">
+    <div class="eyebrow reveal">05 / Quick start</div>
+    <h2 class="reveal">开始使用</h2>
+    <div class="steps">
+      <div class="steprow reveal">
+        <div class="n">1</div>
+        <div><h4>PC 端：开箱即用</h4><p>下载 <code>REA-Panel.exe</code> 双击运行；或在 <code class="file">panel</code> 分支执行 <code>python main.py</code> 开发模式启动。面板会自动定位托管 node + <code>rea.mjs</code>，回退 npm 全局 <code>rea.cmd</code> / PATH 上的 <code>rea</code>。</p></div>
+      </div>
+      <div class="steprow reveal">
+        <div class="n">2</div>
+        <div><h4>手机端：先起后端服务</h4><p>在电脑上执行 <code>python app/rea_server.py</code>（<code class="file">panel</code> 分支），控制台会打印「手机填这个：<code>http://192.168.x.x:8788</code>」。首次运行需允许 Windows 防火墙放行 8788 端口。</p></div>
+      </div>
+      <div class="steprow reveal">
+        <div class="n">3</div>
+        <div><h4>手机端：安装并连接</h4><p>安装 <code>REA-Panel-Mobile.apk</code>（Android 7.0+），手机与电脑连同一 WiFi，在「连接」页填入上一步的地址（可选令牌），点「测试连接」，状态灯变绿即可进命令列表。</p></div>
+      </div>
+      <div class="steprow reveal">
+        <div class="n">4</div>
+        <div><h4>选命令 → 填参数 → 运行</h4><p>参数表单由 JSON Schema 自动生成，填完点「运行」，结果在 JSON / 文本视图间切换；长任务通过 SSE 逐段回显。快捷键：<code>Ctrl+F</code> 搜索、<code>Ctrl+Enter</code> / <code>F5</code> 运行、<code>Esc</code> 清空搜索。</p></div>
+      </div>
+    </div>
+    <div class="pipe reveal" style="margin-top:30px;border-color:rgba(245,168,92,.32);background:rgba(245,168,92,.045)">
+      <div class="pt" style="color:var(--or)">已知限制</div>
+      <p style="font-size:13.5px;color:var(--tx2)">REA 的四个分析引擎（Ghidra / IDA / jadx / Hopper）尚未配置，<code class="file">rea doctor</code> 会报 <code class="file">missing_analysis_engine</code>；不依赖引擎的命令（doctor、compare-*、address-to-file-offset 等）可正常调用。手机端服务默认无令牌，仅在可信局域网使用；如需鉴权可在 <code class="file">rea_server.py</code> 设置 <code class="file">TOKEN</code> 并在手机端填写。</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>REA Tool · 双端逆向工程控制台 · v1.0.0</span>
+    <span>
+      <a href="https://github.com/180lisilence/rea-tool-myself/tree/panel" target="_blank" rel="noopener">panel 分支</a> ·
+      <a href="https://github.com/180lisilence/rea-tool-myself/tree/mobile" target="_blank" rel="noopener">mobile 分支</a> ·
+      <a href="https://github.com/180lisilence/rea-tool-myself/releases" target="_blank" rel="noopener">Releases</a>
+    </span>
+  </div>
+</footer>
+
+<script>
+  // 轻量滚动显现
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('on'); io.unobserve(e.target); } });
+  },{threshold:.08,rootMargin:'0px 0px -30px 0px'});
+  document.querySelectorAll('.reveal').forEach(function(el,i){ el.style.transitionDelay=(Math.min(i%6,5)*45)+'ms'; io.observe(el); });
+</script>
+</body>
+</html>
